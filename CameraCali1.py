@@ -47,10 +47,11 @@ if __name__ == "__main__":
     # termination criteria to determin the subpixels
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0) 
+    # the object points already 
     objp = np.zeros((6 * 7, 3), np.float32)
-    objp[:, :2] = np.mgrid[0:7, 0:6].T.reshape(-1, 2) #(42 points 42:3)
-    print(f'array shape:{objp.shape}')
+    objp[:, :2] = np.mgrid[0:7, 0:6].T.reshape(-1, 2) #(42 points 42:3) and their coordinate is known
+    print(f'array shape:{objp.shape} {objp}')
 
     # Arrays to store object points and image points from all the images.
     objpoints = []  # 3d point in real world space
@@ -75,7 +76,7 @@ if __name__ == "__main__":
             framecount = framecount+1
             print(f"Current frame:{framecount}")
             if retfind == True:
-                objpoints.append(objp)
+                objpoints.append(objp)      #Make place for new object points
                 corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
                 imgpoints.append(corners2)
                 print("corners found\n")
@@ -98,7 +99,7 @@ if __name__ == "__main__":
         objpoints, imgpoints, gray.shape[::-1], None, None
     )
 
-    print(f"ret:{ret} | mtx:{mtx} | dist:{dist} | rvecs:{rvecs} | tvecs:{tvecs}\n")
+    print(f"ret:{ret} \n mtx:{mtx} \n dist:{dist} \n rvecs:{rvecs} \n tvecs:{tvecs}\n")
     result = input("the name to save")
     save(result, mtx, dist)
 
@@ -112,5 +113,8 @@ if __name__ == "__main__":
     print("total error: {}".format(mean_error / len(objpoints)))
 
     undistort(mtx,dist,img)
+    imgdis = np.zeros_like(img)
+    newmtx = np.zeros_like(mtx)
+    cv.imshow("undistort",imgdis)
     cv.waitKey()
 
