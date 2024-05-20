@@ -41,5 +41,7 @@ if __name__=="__main__" :
         if ret:
             cv.imshow("original", img)
             undistort(mtx,dist,img)
-            cv.waitKey(200)
+            if (cv.waitKey(int(1000/60))&0xff == ord('q')):
+                cv.destroyAllWindows()
+                break
             

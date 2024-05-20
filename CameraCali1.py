@@ -76,20 +76,28 @@ if __name__ == "__main__":
             framecount = framecount+1
             print(f"Current frame:{framecount}")
             if retfind == True:
-                objpoints.append(objp)      #Make place for new object points
-                corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-                imgpoints.append(corners2)
                 print("corners found\n")
+
                 # Draw and display the corners
+                corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
                 cv.drawChessboardCorners(img, (7, 6), corners2, retfind)
                 cv.imshow("corners", img)
 
+                # Decide if keeping the points
+                if cv.waitKey(0)&0xff == ord(' '):
+                    objpoints.append(objp)      #Make place for new object points
+                    imgpoints.append(corners2)  #Register the image points 
+                    count = count - 1
+                    print(f"acquired :{count} \n")
+                else:
+                    print("discard\n")
+
                 # Only need ten valid frames
-                count = count - 1
+               
                 if count <= 0:
                     cap.release()
                     break
-            cv.waitKey(500)
+            cv.waitKey(20)
         else:
             cap.release()
     
@@ -113,8 +121,6 @@ if __name__ == "__main__":
     print("total error: {}".format(mean_error / len(objpoints)))
 
     undistort(mtx,dist,img)
-    imgdis = np.zeros_like(img)
-    newmtx = np.zeros_like(mtx)
-    cv.imshow("undistort",imgdis)
     cv.waitKey()
+    cv.destroyAllWindows()
 
