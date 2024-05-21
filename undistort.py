@@ -6,11 +6,9 @@ def retrive(filename):
     with open(filename, "r") as f:
         loadeddict = yaml.safe_load(f)
 
-    mtx_loaded = loadeddict.get("camera_matrix")
-    dist_loaded = loadeddict.get("dist_coeff")
+    mtx_loaded = np.asarray(loadeddict.get("camera_matrix"))
+    dist_loaded = np.asarray(loadeddict.get("dist_coeff"))
 
-    mtx_loaded = np.asarray(mtx_loaded,np.float32)
-    dist_loaded = np.asarray(dist_loaded,np.float32)
     return (mtx_loaded, dist_loaded)
 
 def undistort(mtx,dist,img):
@@ -26,6 +24,8 @@ def undistort(mtx,dist,img):
 mtx = np.zeros((3,3),np.float32)
 dist = np.zeros((5,1),np.float32)
 if __name__=="__main__" :
+    fps = 30
+    
     mtx,dist = retrive(input("the profile to use:"))
 
     print(mtx)
@@ -41,7 +41,7 @@ if __name__=="__main__" :
         if ret:
             cv.imshow("original", img)
             undistort(mtx,dist,img)
-            if (cv.waitKey(int(1000/60))&0xff == ord('q')):
+            if (cv.waitKey(int(1000/fps))&0xff == ord('q')):
                 cv.destroyAllWindows()
                 break
             
