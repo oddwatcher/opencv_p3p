@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
 import yaml
-
+import matplotlib.pyplot as plt
 fps = 30
 
 
@@ -15,6 +15,11 @@ def retrive(filename):
 
     return (mtx_loaded, dist_loaded)
 
+def convertpts(pts_float):
+    pts_int = []
+    for i in pts_float:
+        pts_int.append(tuple(map(int, i.ravel())))
+    return pts_int
 
 def drawaxis(img, corners, imgpts):  # Draw the axis
     corner = tuple(map(int, corners[0].ravel()))
@@ -24,8 +29,21 @@ def drawaxis(img, corners, imgpts):  # Draw the axis
     return img
 
 
-if __name__ == "__main__":
+def drawtranslate(tvecs_list):
+    x=[]
+    y=[]
+    z=[]
+    for i in tvecs_list:
+        x.append(i[0])
+        y.append(i[1])
+        z.append(i[2])
+    ax = plt.figure().add_subplot(projection='3d')
+    ax.plot(x, y, z, label='3d path on camera coordinate')
+    ax.legend()
+    plt.show()
 
+if __name__ == "__main__":
+    traslatedata=[]
     # Retrive the data
     mtx, dist = retrive(input("The camera profile to use:"))
 
@@ -35,14 +53,16 @@ if __name__ == "__main__":
         0.001,
     )  # still needed for feature extraction
 
-    objp = np.zeros((6 * 7, 3), np.float32)
-    objp[:, :2] = np.mgrid[0:7, 0:6].T.reshape(
+    objp = np.zeros((3 * 4, 3), np.float32)
+    objp[:, :2] = np.mgrid[0:4, 0:3].T.reshape(
         -1, 2
     )  # an array of 42x3 filled with coordinates of points
+    print(objp)
 
     axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, -3]]).reshape(
         -1, 3
     )  # The drawn box/axis
+
     src = input("the image src:")
     try:
         src_num = int(src)
@@ -58,22 +78,23 @@ if __name__ == "__main__":
         if ret_img:
             frame_count = frame_count + 1
             gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-
-            ret, corners = cv.findChessboardCorners(gray, (7, 6), None)
+            
+            ret, corners = cv.findChessboardCorners(gray, (4, 3), None)
             if ret == True:
                 corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
                 # Find the rotation and translation vectors.
-                
+
                 ret, rvecs, tvecs = cv.solvePnP(objp, corners2, mtx, dist)
+                print(f"X:{tvecs[0]} Y:{tvecs[1]} Z:{tvecs[2]} rX:{rvecs[0]} rY:{rvecs[1]} rZ:{rvecs[2]}\r",end='')
+                traslatedata.append(tvecs)
                 # project 3D points to image plane
                 imgpts, jac = cv.projectPoints(axis, rvecs, tvecs, mtx, dist)
 
                 img = drawaxis(img, corners2, imgpts)
-
+                
                 cv.imshow("img", img)
             else:
                 cv.imshow("img", img)
-
 
             k = cv.waitKey(int(1000 / fps)) & 0xFF
             if k == ord("s"):
@@ -82,3 +103,5 @@ if __name__ == "__main__":
                 cap.release()
                 cv.destroyAllWindows()
                 break
+    drawtranslate(traslatedata)
+    cv.waitKey()

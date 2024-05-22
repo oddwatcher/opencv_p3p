@@ -49,8 +49,8 @@ if __name__ == "__main__":
 
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0) 
     # the object points already 
-    objp = np.zeros((6 * 7, 3), np.float32)
-    objp[:, :2] = np.mgrid[0:7, 0:6].T.reshape(-1, 2) #(42 points 42:3) and their coordinate is known
+    objp = np.zeros((3 * 4, 3), np.float32)
+    objp[:, :2] = np.mgrid[0:4, 0:3].T.reshape(-1, 2) #(42 points 42:3) and their coordinate is known
     print(f'array shape:{objp.shape} {objp}')
 
     # Arrays to store object points and image points from all the images.
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         cap = cv.VideoCapture(vidnum)
     except:
         cap = cv.VideoCapture(vidpath)
-    count = 10
+    count = 20
     framecount =0
     while cap.isOpened():
         ret, img = cap.read()
@@ -71,7 +71,7 @@ if __name__ == "__main__":
             cv.imshow("img", img)
             gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
             # Find the chess board corners
-            retfind, corners = cv.findChessboardCorners(gray, (7, 6), None)
+            retfind, corners = cv.findChessboardCorners(gray, (4, 3), None)
             # If found, add object points, image points (after refining them)
             framecount = framecount+1
             print(f"Current frame:{framecount}")
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
                 # Draw and display the corners
                 corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-                cv.drawChessboardCorners(img, (7, 6), corners2, retfind)
+                cv.drawChessboardCorners(img, (4, 3), corners2, retfind)
                 cv.imshow("corners", img)
 
                 # Decide if keeping the points
