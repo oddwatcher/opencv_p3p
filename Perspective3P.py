@@ -3,7 +3,7 @@ import numpy as np
 import yaml
 import matplotlib.pyplot as plt
 
-Debug = False
+Debug = True
 
 class KalmanFilter(object):
     def __init__(self, dt, u_x, u_y, std_acc, x_std_meas, y_std_meas):
@@ -73,8 +73,8 @@ class KalmanFilter(object):
 
 
 
-def retrive(filename):
-    # Retrive the data
+def retrieve(filename):
+    # Retrieve the data
     with open(filename, "r") as f:
         loadeddict = yaml.safe_load(f)
 
@@ -144,18 +144,19 @@ def draw(vecs_list):
 
 if __name__ == "__main__":
     plt.isinteractive=True
-    # constants
+    # constants and global varibles
     fps = 30
     transdata = []
     rotdata=[]
     frame_data=[]
+    reprojected=[]
 
-    # Retrive the camera data
+    # Retrieve the camera data
     axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, 3]]).reshape(
         -1, 3
     )  # The drawn box/axis
     
-    mtx, dist = retrive(input("The camera profile to use:"))
+    mtx, dist = retrieve(input("The camera profile to use:"))
     # End of constants
     
     src = input("the image src:")
@@ -165,6 +166,8 @@ if __name__ == "__main__":
     except:
         cap = cv.VideoCapture(src)
     frame_count = 0
+
+    
 
     while cap.isOpened():
 
@@ -183,7 +186,7 @@ if __name__ == "__main__":
                 )
 
                 transdata.append(tvecs)
-                rotdata.append(rvecs)
+                reprojected.append((tvecs[0],tvecs[2]*np.cos(rvecs[0])))
                 frame_data.append(frame_count)
 
                 # project 3D points to image plane
@@ -208,11 +211,9 @@ if __name__ == "__main__":
     # Post processing
 
     draw(transdata)
-    kalman=KalmanFilter(1/fps, 1, 10, 10, 1,1)
 
-    reprojected=[]
-    for n,i in enumerate(transdata):
-        reprojected.append((i[0],i[2]*np.cos(rotdata[n][0])))
+    kalman=KalmanFilter(1/fps, 1, 10, 100, 1,10)
+
     draw(reprojected)
     pred = []
     update = []

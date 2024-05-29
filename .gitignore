@@ -4,3 +4,4 @@
 /Tex_files/*.gz
 /Tex_files/*.fls 
 /output/*
+/.vscode

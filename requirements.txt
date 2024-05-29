@@ -1,0 +1,5 @@
+scipy == any
+opencv-python == any
+pyyaml == any
+numpy == any
+matplotlib == any
