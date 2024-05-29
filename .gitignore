@@ -1,0 +1,6 @@
+/Tex_files/*.aux
+/Tex_files/*.fdb_latexmk
+/Tex_files/*.log
+/Tex_files/*.gz
+/Tex_files/*.fls 
+/output/*

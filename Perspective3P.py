@@ -3,6 +3,8 @@ import numpy as np
 import yaml
 import matplotlib.pyplot as plt
 
+Debug = False
+
 class KalmanFilter(object):
     def __init__(self, dt, u_x, u_y, std_acc, x_std_meas, y_std_meas):
         """
@@ -146,6 +148,8 @@ if __name__ == "__main__":
     fps = 30
     transdata = []
     rotdata=[]
+    frame_data=[]
+
     # Retrive the camera data
     axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, 3]]).reshape(
         -1, 3
@@ -180,14 +184,16 @@ if __name__ == "__main__":
 
                 transdata.append(tvecs)
                 rotdata.append(rvecs)
+                frame_data.append(frame_count)
+
                 # project 3D points to image plane
-                imgpts, jac = cv.projectPoints(axis, rvecs, tvecs, mtx, dist)
-
-                img = drawaxis(img, imgp, imgpts)
-
-                cv.imshow("img", img)
+                if Debug:
+                    imgpts, jac = cv.projectPoints(axis, rvecs, tvecs, mtx, dist)
+                    img = drawaxis(img, imgp, imgpts)
+                    cv.imshow("img", img)
             else:
-                cv.imshow("img", img)
+                if Debug:
+                    cv.imshow("img", img)
 
             k = cv.waitKey(int(1000 / fps)) & 0xFF
             if k == ord("s"):
@@ -196,6 +202,11 @@ if __name__ == "__main__":
                 cap.release()
                 cv.destroyAllWindows()
                 break
+        else:
+            print("read frame failed\n")
+
+    # Post processing
+
     draw(transdata)
     kalman=KalmanFilter(1/fps, 1, 10, 10, 1,1)
 
