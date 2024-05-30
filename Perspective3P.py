@@ -123,21 +123,21 @@ def getfeaturepoints(
         return [0, 0, 0]
 
 
-def draw(vecs_list):
+def draw(vecs_list,figure_name):
     m = len(vecs_list[0])
     x = []
     y = []
     z = []
 
     for i in vecs_list:
-        x.append(float(i[0]))
-        y.append(float(i[1]))
+        x.append(float(i[0].flatten()))
+        y.append(float(i[1].flatten()))
         if m>2:
-            z.append(float(i[2]))
+            z.append(float(i[2].flatten()))
         else:
             z.append(0.0)
     ax = plt.figure().add_subplot(projection="3d")
-    ax.plot(x, y, z, label="3d path on camera coordinate")
+    ax.plot(x, y, z, label=figure_name)
     ax.legend()
     plt.show()
 
@@ -206,21 +206,21 @@ if __name__ == "__main__":
                 cv.destroyAllWindows()
                 break
         else:
-            print("read frame failed\n")
+            print("Read frame failed\n")
 
     # Post processing
 
-    draw(transdata)
+    draw(transdata,"The 3d Path")
 
     kalman=KalmanFilter(1/fps, 1, 10, 100, 1,10)
 
-    draw(reprojected)
+    draw(reprojected,"The projected 2d path")
     pred = []
     update = []
     for i in reprojected:
         pred.append(kalman.predict())
         update.append(kalman.update(i))
 
-    draw(pred)
-    draw(update)
+    draw(pred,"The predicted path")
+    draw(update,"The filtered path")
     cv.waitKey()
