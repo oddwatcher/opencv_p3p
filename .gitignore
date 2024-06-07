@@ -5,3 +5,4 @@
 /Tex_files/*.fls 
 /output/*
 /.vscode
+.venv

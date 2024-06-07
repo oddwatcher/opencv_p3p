@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
     draw(transdata,"The 3d Path")
 
-    kalman=KalmanFilter(1/fps, 1, 10, 100, 1,10)
+    kalman=KalmanFilter(1/fps, 1, 10, 10, 1,10)
 
     draw(reprojected,"The projected 2d path")
     pred = []
@@ -223,4 +223,19 @@ if __name__ == "__main__":
 
     draw(pred,"The predicted path")
     draw(update,"The filtered path")
+  
+    with open(input("filename")+".yaml", "w") as f:
+        data = {
+        "MTX": mtx.tolist(),
+        "Distort": np.asarray(dist).tolist(),
+        "Frame":frame_data,
+        "Tvecs": np.asarray(transdata).tolist(),
+        "Rvecs": np.asarray(rotdata).tolist(),
+        "Orginal": np.asarray(reprojected).tolist(),
+        "Projected": np.asarray(dist).tolist(),
+        "Predicted":np.asarray(pred).tolist(),
+        "Filtered":np.asarray(update).tolist(),
+
+    }
+        yaml.dump(data, f)
     cv.waitKey()

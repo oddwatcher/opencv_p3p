@@ -54,16 +54,17 @@ However, a real pinhole camera cannot work in most conditions since a small hole
 \section{The coordinate systems}
 Here we must talk about the coordinates of the world coordinate and camera coordinates before we can give any meanful mathematical representations of out problem.
 
-The parameters of the camera intrinsic matrix are estimated by performing the camera calibration procedure. The latter is typically performed using a set of known geometric patterns (e.g., chessboard patterns) or objects with precisely measured dimensions, allowing for the estimation of the camera parameters through mathematical algorithms, such as Zhang's method or the Direct Linear Transform (DLT) algorithm.
-Coordinates represent locations of points under a given coordinate system. Since the world is big and ambiguous we shall not try to find a origin of the world but to change it to some where we feel comfortable with. That's why the transforms kicks in we need to know the coordinate of something under different coordinate systems.
+In the view of camera everything is pixels, and the camera locates pixels by camera coordinate $(u,v)$ (1) the origin of pixel is at upper left corner of the image and x goes to right y goes down.
 
-In the view of camera everything is pixels, and the camera locates pixels by camera coordinate $(u,v)$(1) the origin is at upper left corner.
-
-In the view of perspective transformation the origin of the camera locates at the principle
-point$(x,y)$ and the world coordinate's origin locates at the focal point$(X_c,Y_c,Z_c)$ (3) share axis with the camera.
-In the view of other stuff in the world, it has it's own coordinate and their own axis.(4)
+In the 3-d world we can establish a coordinate system by using the camera as a reference.The origin locates at the focal point of the camera. We denote the coordinate as
+ $(X_c,Y_c,Z_c)$ 
+ and since world coordinate's origin locates at the focal point share $z$ axis with the camera. We can immediately have a 2D coordinate system which the $x,y$ axis is paraell to the $X_c Y_c$ and it's origin is at the principle point of the optical system on the image plane, for the analysis of the optical projection.
+In the view of other stuff in the world, it has it's own coordinate and their own axis. We denote the coordinate as $(X,Y,Z)$.
 \section{Camera Parameters}
 \subsection[short]{The camera matrix}
+
+The parameters of the camera intrinsic matrix are estimated by performing the camera calibration procedure. In our case the intrinsic matrix is obtained by manufactor of the camera.
+
 The differences between different cameras can be described in these quantities:  
 
 1. The focal length: The distance between the center of the projection and the image plane.
@@ -74,11 +75,11 @@ The differences between different cameras can be described in these quantities:
 
 4. The principal point is defined as the point of intersection between the optical axis and the image plane.
 
-The focal length together with the sensor size determines the field of view and the magnification of the camera. A longer focal length results in a narrower field of view and magnifies distant objects, while a shorter focal length captures a wider field of view but diminishes the magnification of distant objects. Sensor size is the inverse of the focal length. Larger sensor is the same as we get shorter focal length smaller sensor is the same as we get longer focal length. We cannot determine the focal length just by measuring the size of items in the image.But for a know size of sensor it is possible.
+The focal length together with the sensor size determines the field of view and the magnification of the camera. A longer focal length results in a narrower field of view and magnifies distant objects, while a shorter focal length captures a wider field of view but diminishes the magnification of distant objects. Sensor size is the inverse of the focal length. Larger sensor is the same as we get shorter focal length smaller sensor is the same as we get longer focal length. We cannot determine the focal length just by measuring the size of items in the image.But for a known size of sensor it is possible.
 
 The relation between a point \begin{equation}
-    Q=(X, Y, Z)
-\end{equation}in the real space and its projection on the image plane at the pixel location \begin{equation}
+    Q=(X_c, Y_c, Z_c)
+\end{equation}in space under camera coordinate and its projection on the image plane under the 2D camera coordinate is \begin{equation}
     (x_s, y_s)
 \end{equation} is represented by the following equations:
 \begin{eqnarray}
@@ -98,7 +99,7 @@ $M$ is a $3\times3$ matrix called camera intrinsic matrix:where $q$ and $Q$ are 
         0&f_y&c_y \\
         0&0&1
     \end{bmatrix}
-\end{equation}
+\end{equation} 
 
 The camera intrinsic matrix represents the internal parameters of a camera, including the focal length, and it allows to project 3D points in the world onto the 2D image plane.
 
@@ -107,7 +108,7 @@ The camera intrinsic matrix represents the internal parameters of a camera, incl
     (X_w,Y_w,Z_w)\rightarrow Rigid Body translation &= (X_c,Y_c,Z_c)
     \\(X_c,Y_c,Z_c)\rightarrow Perspective projection &= (x,y)\\(x,y)\rightarrow camera correction &= (u,v)
 \end{align*}
-
+The corresponding matrix expression of the translations above
 \begin{align}
     \begin{bmatrix}
         R_{3\times3} & T_{3\times1} \\O & 1
@@ -134,4 +135,19 @@ The camera intrinsic matrix represents the internal parameters of a camera, incl
         u\\v\\1
     \end{bmatrix}  
 \end{align}
+
+
+\section{Solving constrained perspective 3 points problem}
+\subsection*{Problem formulation}
+
+Given frame of a known camera calibrated for distortions, three 3D points $\boldsymbol{x_i}= (x_i,y_i,z_i)$, and corresponding homogeneous image coordinates $\boldsymbol{y_i} \in (u_i,v_i,1)$ and normalsize it s.t $|\boldsymbol{y_i}|= 1$, then:
+ \begin{equation}
+    \boldsymbol{\lambda_i} \boldsymbol{y_i} = \boldsymbol{R}\boldsymbol{x_i} +\boldsymbol{t}, i \in {1,2,3}
+ \end{equation}
+ where the rotation $\boldsymbol{R} \in SO(3)$ together with the translation $\boldsymbol{t} \in IR3$ define the pose of
+ the camera. In short a P3P solver is a function $[\boldsymbol{R_k,t_k}] = P3P(x1:3,y1:3)$. Depending
+ on the configuration of the points, P3P has up to four solutions.
+ A necessary condition to assure the solutions are finate, is neither the 3D points nor the 2D points are collinear. In that case no information will be obtained on image plane. The solutions should be real numbers corresponding to coordinates. And the parameters $\lambda_k$ is the signed distance from the camera center for each 3D point, $\lambda_1,\lambda_2, $and $\lambda_3$ are required to be positive and real. This is a geometric feasibility condition on the solutions, which implies that all three 3D points are in the view the camera. Since we are working for a solution on a flat surface, we can filter out solution to further away from the surface.
+ 
 \end{document}
+
