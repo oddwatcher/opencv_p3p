@@ -5,15 +5,53 @@ import matplotlib.pyplot as plt
 
 Debug = True
 
+
+class space:
+    def __init__(s, mtx,foucal, pt1, pt2, pt3):
+        """
+
+        The plane which relevent to the camera in mm units
+
+        
+        """
+        s.fx = mtx[0, 0]
+        s.fy = mtx[1, 1]
+        s.cx = mtx[0, 2]
+        s.cy = mtx[1, 2]
+
+        # calculate the plane Ax+By+Cz+D=0 N = vec1xvec2
+        vec1 = (pt1[0] - pt2[0], pt1[1] - pt2[1], pt1[2] - pt2[2])
+        vec2 = (pt1[0] - pt3[0], pt1[1] - pt3[1], pt1[2] - pt3[2])
+        s.N = (
+            vec1[2] * vec2[3] - vec1[3] * vec2[2],
+            vec1[3] * vec2[1] - vec1[1] * vec2[3],
+            vec1[1] * vec2[2] - vec1[2] * vec2[1],
+        )
+        if s.N[2] < 0:
+            s.N = (-s.N[0], -s.N[1], -s.N[2])
+        s.D = -(s.N[0] * pt1[0] + s.N[1] * pt1[1] + s.N[2] * pt1[2])
+
+    def intersect(s, pixelpt):
+        
+
+    """
+    Ray is used to describe the light shooting out of the camera, is a pixel to ray representation.
+    giving a pixel and a mtx this function returns a ray object which units in mm and coorindates using the camera coordinate
+    For the mtx of a given camera is fixed mtx is only needed on init.
+    Since the distance on the imagining plane is fX/Z fY/Z the MTX's fx fy describles how many pixels per mm/other units 
+    The real distance is pixel/ax 
+    """
+
+
 class KalmanFilter(object):
     def __init__(self, dt, u_x, u_y, std_acc, x_std_meas, y_std_meas):
         """
-         dt: sampling time (time for 1 cycle)
-         u_x: acceleration in x-direction
-         u_y: acceleration in y-direction
-         std_acc: process noise magnitude
-         x_std_meas: standard deviation of the measurement in x-direction
-         y_std_meas: standard deviation of the measurement in y-direction
+        dt: sampling time (time for 1 cycle)
+        u_x: acceleration in x-direction
+        u_y: acceleration in y-direction
+        std_acc: process noise magnitude
+        x_std_meas: standard deviation of the measurement in x-direction
+        y_std_meas: standard deviation of the measurement in y-direction
         """
         # Define sampling time
         self.dt = dt
@@ -49,7 +87,7 @@ class KalmanFilter(object):
         self.P = np.eye(self.A.shape[1])
 
     def predict(self):
-        # Refer to :Eq.(9) and Eq.(10)  
+        # Refer to :Eq.(9) and Eq.(10)
         # Update time state
         # x_k =Ax_(k-1) + Bu_(k-1)     Eq.(9)
         self.x = np.dot(self.A, self.x) + np.dot(self.B, self.u)
@@ -59,7 +97,7 @@ class KalmanFilter(object):
         return self.x[0:2]
 
     def update(self, z):
-        # Refer to :Eq.(11), Eq.(12) and Eq.(13)  
+        # Refer to :Eq.(11), Eq.(12) and Eq.(13)
         # S = H*P*H'+R
         S = np.dot(self.H, np.dot(self.P, self.H.T)) + self.R
         # Calculate the Kalman Gain
@@ -70,7 +108,6 @@ class KalmanFilter(object):
         # Update error covariance matrix
         self.P = (I - (K * self.H)) * self.P  # Eq.(13)
         return self.x[0:2]
-
 
 
 def retrieve(filename):
@@ -123,7 +160,7 @@ def getfeaturepoints(
         return [0, 0, 0]
 
 
-def draw(vecs_list,figure_name):
+def draw(vecs_list, figure_name):
     m = len(vecs_list[0])
     x = []
     y = []
@@ -132,7 +169,7 @@ def draw(vecs_list,figure_name):
     for i in vecs_list:
         x.append(float(i[0].flatten()))
         y.append(float(i[1].flatten()))
-        if m>2:
+        if m > 2:
             z.append(float(i[2].flatten()))
         else:
             z.append(0.0)
@@ -143,22 +180,22 @@ def draw(vecs_list,figure_name):
 
 
 if __name__ == "__main__":
-    plt.isinteractive=True
+    plt.isinteractive = True
     # constants and global varibles
     fps = 30
     transdata = []
-    rotdata=[]
-    frame_data=[]
-    reprojected=[]
+    rotdata = []
+    frame_data = []
+    reprojected = []
 
     # Retrieve the camera data
     axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, 3]]).reshape(
         -1, 3
     )  # The drawn box/axis
-    
+
     mtx, dist = retrieve(input("The camera profile to use:"))
     # End of constants
-    
+
     src = input("the image src:")
     try:
         src_num = int(src)
@@ -166,8 +203,6 @@ if __name__ == "__main__":
     except:
         cap = cv.VideoCapture(src)
     frame_count = 0
-
-    
 
     while cap.isOpened():
 
@@ -186,7 +221,7 @@ if __name__ == "__main__":
                 )
 
                 transdata.append(tvecs)
-                reprojected.append((tvecs[0],tvecs[2]*np.cos(rvecs[0])))
+                reprojected.append((tvecs[0], tvecs[2] * np.cos(rvecs[0])))
                 frame_data.append(frame_count)
 
                 # project 3D points to image plane
@@ -210,32 +245,31 @@ if __name__ == "__main__":
 
     # Post processing
 
-    draw(transdata,"The 3d Path")
+    draw(transdata, "The 3d Path")
 
-    kalman=KalmanFilter(1/fps, 1, 10, 10, 1,10)
+    kalman = KalmanFilter(1 / fps, 1, 10, 10, 1, 10)
 
-    draw(reprojected,"The projected 2d path")
+    draw(reprojected, "The projected 2d path")
     pred = []
     update = []
     for i in reprojected:
         pred.append(kalman.predict())
         update.append(kalman.update(i))
 
-    draw(pred,"The predicted path")
-    draw(update,"The filtered path")
-  
-    with open(input("filename")+".yaml", "w") as f:
-        data = {
-        "MTX": mtx.tolist(),
-        "Distort": np.asarray(dist).tolist(),
-        "Frame":frame_data,
-        "Tvecs": np.asarray(transdata).tolist(),
-        "Rvecs": np.asarray(rotdata).tolist(),
-        "Orginal": np.asarray(reprojected).tolist(),
-        "Projected": np.asarray(dist).tolist(),
-        "Predicted":np.asarray(pred).tolist(),
-        "Filtered":np.asarray(update).tolist(),
+    draw(pred, "The predicted path")
+    draw(update, "The filtered path")
 
-    }
+    with open(input("filename") + ".yaml", "w") as f:
+        data = {
+            "MTX": mtx.tolist(),
+            "Distort": np.asarray(dist).tolist(),
+            "Frame": frame_data,
+            "Tvecs": np.asarray(transdata).tolist(),
+            "Rvecs": np.asarray(rotdata).tolist(),
+            "Orginal": np.asarray(reprojected).tolist(),
+            "Projected": np.asarray(dist).tolist(),
+            "Predicted": np.asarray(pred).tolist(),
+            "Filtered": np.asarray(update).tolist(),
+        }
         yaml.dump(data, f)
     cv.waitKey()

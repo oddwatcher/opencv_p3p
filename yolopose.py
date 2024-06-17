@@ -2,14 +2,7 @@ import csv
 import cv2
 import numpy as np
 import yaml
-
-
-def save(filename, mtx, dist):
-    data = {
-        "camera_matrix": np.asarray(mtx).tolist(),
-        "dist_coeff": np.asarray(dist).tolist(),
-    }
-
+humanpoints = {"5,6":360,"3,4":156,"height":1566,"O1":[(0,0),(360,0),(102,220),(158,220)]}   #6,5,3,4
 
 file = input("the video file to read, csv file should have the name of video file\n")
 file = file.lstrip('"')
@@ -25,6 +18,8 @@ frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 frame_size = (frame_width, frame_height)
 fps = int(cap.get(cv2.CAP_PROP_FPS))
+
+
 
 from ultralytics import YOLO
 
@@ -112,6 +107,8 @@ for counter, row in enumerate(reader):
         npkeypoint = results[0].keypoints.numpy()
 
         for i, j in enumerate(npkeypoint.data[trackingid]):
+
+            
             marked = cv2.rectangle(
                 padded,
                 (int(j[0]), int(j[1])),
