@@ -7,7 +7,7 @@ Debug = True
 
 
 class space:
-    def __init__(s, mtx,foucal, pt1, pt2, pt3):
+    def __init__(s, mtx, pt1, pt2, pt3):
         """
 
         The plane which relevent to the camera in mm units
@@ -32,6 +32,14 @@ class space:
         s.D = -(s.N[0] * pt1[0] + s.N[1] * pt1[1] + s.N[2] * pt1[2])
 
     def intersect(s, pixelpt):
+        #All units here are in pixels since we do not know either the sensor size or the 
+        x = (pixelpt-s.cx)/s.fx
+        y = (pixelpt-s.cy)/s.fy
+        z = 1
+
+        k = -s.D/(s.N[1]*x+s.N[2]*y+s.N[3]*z)
+        return (k*x,k*y,k*z)
+
         
 
     """
@@ -85,6 +93,13 @@ class KalmanFilter(object):
         self.R = np.matrix([[x_std_meas**2, 0], [0, y_std_meas**2]])
         # Initial Covariance Matrix
         self.P = np.eye(self.A.shape[1])
+    def __init__(s,rot,tran):
+        """
+        The rot is the rotation vector and trans is the tranformation vector provided by solving PnP
+        """
+
+        rot[0]  #The rotation in rad X Y Z axis and only in +pi/-pi using right thumb law to id the rotation
+        
 
     def predict(self):
         # Refer to :Eq.(9) and Eq.(10)

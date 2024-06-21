@@ -19,7 +19,7 @@ frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 frame_size = (frame_width, frame_height)
 fps = int(cap.get(cv2.CAP_PROP_FPS))
 
-
+detectnframe = fps
 
 from ultralytics import YOLO
 
@@ -99,33 +99,34 @@ for counter, row in enumerate(reader):
     print(f"X{pos1[0]} Y{pos1[1]}\r", end="")
     cv2.imshow("Target_area", padded)
 
-    if counter % 15 == 0:
+    if counter % detectnframe == 0:
 
         results = model.track(padded, persist=True)
 
         track_ids = results[0].boxes.id.int().cpu().tolist()
         npkeypoint = results[0].keypoints.numpy()
-
+        pointlist =[]
         for i, j in enumerate(npkeypoint.data[trackingid]):
-
+            point = (int(j[0])+pos1[1], int(j[1])+pos1[2])
             
             marked = cv2.rectangle(
-                padded,
-                (int(j[0]), int(j[1])),
-                (int(j[0]) + 1, int(j[1]) + 1),
+                frame,
+                point
+                (point[0]+1,point[1]+1)
                 (0, i * 10, 250 - i * 10),
             )
             marked = cv2.putText(
-                padded,
+                frame,
                 f"{i}",
-                (int(j[0]), int(j[1])),
+                point,
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
                 (0, i * 10, 250 - i * 10),
             )
+            pointlist.append(point)
 
         cv2.imshow("Results", marked)
-        data = {counter: npkeypoint.data[trackingid].tolist()}
+        data = {counter: pointlist}
 
         yaml.dump(data, outputfile)
 
