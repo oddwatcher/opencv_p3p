@@ -5,14 +5,16 @@ import matplotlib.pyplot as plt
 
 Debug = True
 
+target_torso_height = 1300  # Units in mm
+target_head_height = 1650
+
 
 class space:
     def __init__(s, mtx, pt1, pt2, pt3):
         """
 
-        The plane which relevent to the camera in mm units
+        The plane which relevent to the camera in mm units this function returns the place by 3 different points
 
-        
         """
         s.fx = mtx[0, 0]
         s.fy = mtx[1, 1]
@@ -30,36 +32,69 @@ class space:
         if s.N[2] < 0:
             s.N = (-s.N[0], -s.N[1], -s.N[2])
         s.D = -(s.N[0] * pt1[0] + s.N[1] * pt1[1] + s.N[2] * pt1[2])
+        print(f"Vec N : x:{s.N[0]} y:{s.N[1]} z:{s.N[2]}", end="\n")
+        # to verify the result of the plane u can checkout if Y is near zero since we assume the camera is placed horizontally.
 
-    def intersect(s, pixelpt):
-        #All units here are in pixels since we do not know either the sensor size or the 
-        x = (pixelpt-s.cx)/s.fx
-        y = (pixelpt-s.cy)/s.fy
+    def __init__(s, rot, tran, mtx):
+        """
+        The Goal of this init overload is to use a singal frame to determin the classroom floor.
+        The rot is the rotation vector and trans is the tranformation vector provided by solving PnP via right thumb law with horizontal as X vertial as Y . The rotation in rad X Y Z axis and only in +pi/-pi using right thumb law to id the rotation and is the rotation of the camera instead of the object as we assume the camera is placed horizontaly thus we only have X rotation, all other rotation is simply put at zero. and P3P assumes the camera is fixed, so the translation and rotation is translation first rotation second.
+        We only consider this problem by XZ plane of camera frame. Since we have no idea on where the camera actually is and dont know
+        Yet inplemented
+        We can only consider things happend in the camera frame since we do not know the relation between real world and the camera.
+
+        """
+        s.fx = mtx[0, 0]
+        s.fy = mtx[1, 1]
+        s.cx = mtx[0, 2]
+        s.cy = mtx[1, 2]
+        rot = abs(rot[0])
+        X = abs(tran[0])
+        Y = abs(tran[1])
+        Z = abs(tran[2])
+
+        l2 = Y * Y + Z * Z
+        FAB = np.arctan(Y / Z) + np.pi / 2 - rot
+        AF = np.cos(FAB) * np.sqrt(l2)
+        FK = AF * np.sin(np.pi / 2 - rot)
+        AK = AF * np.cos(np.pi / 2 - rot)
+
+        s.N = (0, FK, AK)
+        s.D = -(s.N[0] * tran[0] + s.N[1] * tran[1] + s.N[2] * tran[2])
+        print(f"Vec N : x:{s.N[0]} y:{s.N[1]} z:{s.N[2]}", end="\n")
+
+    def remapping(s, pixelpt):
+
+        # All units here are in pixels since we do not know either the sensor size or the physical foucous of the camera so we can only use pixel here as unit.
+        x = (pixelpt - s.cx) / s.fx
+        y = (pixelpt - s.cy) / s.fy
         z = 1
 
-        k = -s.D/(s.N[1]*x+s.N[2]*y+s.N[3]*z)
-        return (k*x,k*y,k*z)
-
+        k = -s.D / (s.N[1] * x + s.N[2] * y + s.N[3] * z) #this calculates the ray and the intersection point
+        """
+        How does remapping takes place? we use 2 unit vector and the 3d coordinate (all in camera frame)
+        The dot product of Tvec and those 2 unit vectors will result in two vecs.
+        Which together will represent the 2d-frame coordinate. 
+        The 2d frame will X axis paraell to camera X axis and Y axis will be perpendicular to it.
+        And their direction is mostly same with the camera frame.
+        First We will need to know the origin of the 2d-frame in camera frame hence get the vecs    
+        """
         
+        vec2DX = ()
+        vec2DY = ()
 
-    """
-    Ray is used to describe the light shooting out of the camera, is a pixel to ray representation.
-    giving a pixel and a mtx this function returns a ray object which units in mm and coorindates using the camera coordinate
-    For the mtx of a given camera is fixed mtx is only needed on init.
-    Since the distance on the imagining plane is fX/Z fY/Z the MTX's fx fy describles how many pixels per mm/other units 
-    The real distance is pixel/ax 
-    """
+        return 1
 
 
 class KalmanFilter(object):
     def __init__(self, dt, u_x, u_y, std_acc, x_std_meas, y_std_meas):
         """
-        dt: sampling time (time for 1 cycle)
-        u_x: acceleration in x-direction
-        u_y: acceleration in y-direction
-        std_acc: process noise magnitude
-        x_std_meas: standard deviation of the measurement in x-direction
-        y_std_meas: standard deviation of the measurement in y-direction
+        :param dt: sampling time (time for 1 cycle)
+        :param u_x: acceleration in x-direction
+        :param u_y: acceleration in y-direction
+        :param std_acc: process noise magnitude
+        :param x_std_meas: standard deviation of the measurement in x-direction
+        :param y_std_meas: standard deviation of the measurement in y-direction
         """
         # Define sampling time
         self.dt = dt
@@ -93,14 +128,6 @@ class KalmanFilter(object):
         self.R = np.matrix([[x_std_meas**2, 0], [0, y_std_meas**2]])
         # Initial Covariance Matrix
         self.P = np.eye(self.A.shape[1])
-    def __init__(s,rot,tran):
-        """
-        The rot is the rotation vector and trans is the tranformation vector provided by solving PnP via right thumb law with horizontal as X vertial as Y . The rotation in rad X Y Z axis and only in +pi/-pi using right thumb law to id the rotation and is the rotation of the camera instead of the object as we assume the camera is placed horizontaly thus we only have X rotation, all other rotation is simply put at zero.
-        """
-
-        
-        
-        
 
     def predict(self):
         # Refer to :Eq.(9) and Eq.(10)
